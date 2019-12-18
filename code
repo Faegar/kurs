@@ -1,0 +1,315 @@
+#pragma once
+#include <string>
+#include <iostream>
+#include <fstream>
+
+/**
+\brief Класс Base32
+
+Класс для программы кодирования с помощью алгоритма Base32
+*/
+class Base32
+{
+private:
+    /**
+    	\brief String alphabet
+
+    	Строка, на основе которой происходит кодирование
+    	*/
+    std::string alfa = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+    /**
+    \brief ifstream fileIn
+
+    Файл для чтения
+    */
+    std::ifstream fileIn;
+    std::string inFile, outFile;
+    /**
+    \brief ofstream fileOut
+
+    Файл для записи
+    */
+    std::ofstream fileOut;
+    /**
+    \brief bool mode
+
+    Переменная для хранения режима работы программы. Режим работы по умолчанию - декодирование
+    */
+    bool mode = false;
+    /**
+    \brief char* input
+
+    Массив данных входного файла
+    */
+    char* input;
+    /**
+    \brief int len;
+
+    Размер входного файла
+    */
+    int len;
+
+public:
+    /**
+    \brief Функция coder
+    Функция coder представляет из себя последовательность действий, реализующая кодирование строки типа char*, в которую был записан входной файл. Функция использует для кодирования строку alfabet из private зоны класса.
+
+    \return Кодированная строка
+
+    Код функции:
+    \code
+    std::string Base32::coder()
+    {
+    std::string output("");
+    int a = len, b = a * 8 / 5;
+    if (a * 8 % 5 != 0)
+    	b++;
+    unsigned char* q;
+    bool* buff;
+    int j = 0;
+    buff = new bool[a * 8];
+    q = new unsigned char[b];
+    for (int i = 1; i < a + 1; i++)
+    {
+    	for (int k = 1; k < 9; k++)
+    	{
+    		buff[j] = (input[i - 1] >> (k - 1)) & 1;
+    		j++;
+    	}
+    }
+    int i = 0;
+    for (int l = 0; l < b; l++)
+    {
+    	q[l] = 0;
+    	if (buff[i] == 1)
+    		q[l] = q[l] | 1;
+    	i++;
+    	if (buff[i] == 1)
+    		q[l] = q[l] | (1 << (1));
+    	i++;
+    	if (buff[i] == 1)
+    		q[l] = q[l] | (1 << (2));
+    	i++;
+        if (buff[i] == 1)
+    		q[l] = q[l] | (1 << (3));
+    	i++;
+    	if (buff[i] == 1)
+    		q[l] = q[l] | (1 << (4));
+    	i++;
+    	output += alfa[(unsigned int)q[l]];
+    }
+    return output;
+    }
+    \endcode
+    */
+    std::string coder();
+    /**
+    \brief Функция coder
+    Функция decoder представляет из себя последовательность действий, реализующая декодирование строки типа char*, в которую был записан входной файл. Функция использует для декодирования строку alfabet из private зоны класса.
+
+    \return Декодированная строка
+
+    Код функции:
+    \code
+    std::string Base32::decoder()
+    {
+    std::string output("");
+    int a = len, b = a * 5 / 8;
+    if (a * 5 % 8 != 0)
+    	b++;
+    unsigned char* q;
+    bool* buff;
+    int j = 0;
+    buff = new bool[a * 5];
+    q = new unsigned char[b];
+    for (int i = 1; i < a + 1; i++)
+    {
+    	for (int k = 1; k < 6; k++)
+    	{
+    		for (int l = 0; l < 32; l++)
+    			if (input[i - 1] == alfa[l])
+    				buff[j] = (l >> (k - 1)) & 1;
+    		j++;
+    	}
+    }
+    int i = 0;
+    for (int l = 0; l < b; l++)
+    {
+    	q[l] = 0;
+    	if (buff[i] == 1)
+    		q[l] = q[l] | 1;
+            i++;
+    	if (buff[i] == 1)
+    		q[l] = q[l] | (1 << 1);
+    	i++;
+    	if (buff[i] == 1)
+    		q[l] = q[l] | (1 << 2);
+    	i++;
+    	if (buff[i] == 1)
+    		q[l] = q[l] | (1 << 3);
+    	i++;
+    	if (buff[i] == 1)
+    		q[l] = q[l] | (1 << 4);
+    	i++;
+    	if (buff[i] == 1)
+    		q[l] = q[l] | (1 << 5);
+    	i++;
+    	if (buff[i] == 1)
+    		q[l] = q[l] | (1 << 6);
+    	i++;
+    	if (buff[i] == 1)
+    		q[l] = q[l] | (1 << 7);
+    	i++;
+    	output += q[l];
+    }
+    return output;
+    }
+    \endcode
+    */
+    std::string decoder();
+    /**
+    \brief Конструктор класса Base32
+    Конструктор класса Base32 окрывает входной и входной файлы, а также читает входной и записывает его в массив input
+    */
+    Base32(std::string in, std::string out, int vote) :inFile(in), outFile(out)
+    {
+        if (vote == 1)
+            mode = true;
+        fileIn.open(inFile, std::ios::binary);
+        fileOut.open(outFile, std::ios::binary);
+        if (!fileIn || !fileOut)
+            throw 'f';
+        fileIn.seekg(0, fileIn.end);
+        len = fileIn.tellg();
+        fileIn.seekg(0, fileIn.beg);
+        input = new char[len + 1];
+        fileIn.read(input, len);
+    }
+    /**
+    \brief Функция result
+    Функция result объединяет функции coder и decoder для упрощенной работы с классом. Данная функция запускает кодирование или декодирование строки на основании выбранного пользователем режима работы программы и записывает результат в выходной файл.
+
+    Код функции:
+    \code
+    void Base32::result()
+    {
+    std::string outStr = "";
+    if (mode)
+    	outStr = coder();
+    else outStr = decoder();
+    fileOut << outStr;
+    }
+    \endcode
+    */
+    void result();
+    /**
+    \brief Деструктор класса Base32
+    Деструктор класса Base32 закрывает входной и выходной файлы
+    */
+    ~Base32()
+    {
+        if (fileIn)
+            fileIn.close();
+        if (fileOut)
+            fileOut.close();
+    }
+};
+#include "Base32.h"
+
+std::string Base32::coder()
+{
+    std::string output("");
+    int a = len, b = a * 8 / 5;
+    if (a * 8 % 5 != 0)
+        b++;
+    unsigned char* q;
+    bool* buff;
+    int j = 0;
+    buff = new bool[a * 8];
+    q = new unsigned char[b];
+    for (int i = 1; i < a + 1; i++) {
+        for (int k = 1; k < 9; k++) {
+            buff[j] = (input[i - 1] >> (k - 1)) & 1;
+            j++;
+        }
+    }
+    int i = 0;
+    for (int l = 0; l < b; l++) {
+        q[l] = 0;
+        if (buff[i] == 1)
+            q[l] = q[l] | 1;
+        i++;
+        if (buff[i] == 1)
+            q[l] = q[l] | (1 << (1));
+        i++;
+        if (buff[i] == 1)
+            q[l] = q[l] | (1 << (2));
+        i++;
+        if (buff[i] == 1)
+            q[l] = q[l] | (1 << (3));
+        i++;
+        if (buff[i] == 1)
+            q[l] = q[l] | (1 << (4));
+        i++;
+        output += alfa[(unsigned int)q[l]];
+    }
+    return output;
+}
+std::string Base32::decoder()
+{
+    std::string output("");
+    int a = len, b = a * 5 / 8;
+    if (a * 5 % 8 != 0)
+        b++;
+    unsigned char* q;
+    bool* buff;
+    int j = 0;
+    buff = new bool[a * 5];
+    q = new unsigned char[b];
+    for (int i = 1; i < a + 1; i++) {
+        for (int k = 1; k < 6; k++) {
+            for (int l = 0; l < 32; l++)
+                if (input[i - 1] == alfa[l])
+                    buff[j] = (l >> (k - 1)) & 1;
+            j++;
+        }
+    }
+    int i = 0;
+    for (int l = 0; l < b; l++) {
+        q[l] = 0;
+        if (buff[i] == 1)
+            q[l] = q[l] | 1;
+        i++;
+        if (buff[i] == 1)
+            q[l] = q[l] | (1 << 1);
+        i++;
+        if (buff[i] == 1)
+            q[l] = q[l] | (1 << 2);
+        i++;
+        if (buff[i] == 1)
+            q[l] = q[l] | (1 << 3);
+        i++;
+        if (buff[i] == 1)
+            q[l] = q[l] | (1 << 4);
+        i++;
+        if (buff[i] == 1)
+            q[l] = q[l] | (1 << 5);
+        i++;
+        if (buff[i] == 1)
+            q[l] = q[l] | (1 << 6);
+        i++;
+        if (buff[i] == 1)
+            q[l] = q[l] | (1 << 7);
+        i++;
+        output += q[l];
+    }
+    return output;
+}
+void Base32::result()
+{
+    std::string outStr = "";
+    if (mode)
+        outStr = coder();
+    else outStr = decoder();
+    fileOut << outStr;
+}
